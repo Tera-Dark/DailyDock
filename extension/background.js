@@ -1,7 +1,7 @@
 const KEY = "dailydock.tasks";
 const dayKey = (d = new Date()) => [d.getFullYear(), String(d.getMonth()+1).padStart(2,"0"), String(d.getDate()).padStart(2,"0")].join("-");
 const dueToday = (task, d = new Date()) => task.repeat === "daily" || (task.repeat === "weekly" && task.weekdays?.includes(d.getDay())) || (task.repeat === "once" && task.date === dayKey(d));
-const isDone = (task, d = new Date()) => task.completed?.includes(dayKey(d)) ?? false;
+const isDone = (task, d = new Date()) => task.completed?.includes(task.repeat==="once"?"__once__":dayKey(d)) ?? false;
 async function schedule() {
   await chrome.alarms.clearAll();
   const { [KEY]: tasks = [] } = await chrome.storage.local.get(KEY);
