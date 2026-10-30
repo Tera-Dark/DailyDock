@@ -20,7 +20,7 @@ async function remind(id) {
   const task = tasks.find(t=>t.id===id);
   if (!task || !dueToday(task) || isDone(task)) return;
   await chrome.notifications.create("dd:"+id,{
-    type:"basic",iconUrl:"icon.svg",title:"DailyDock · 待办提醒",
+    type:"basic",iconUrl:"icon.png",title:"DailyDock · 待办提醒",
     message:task.title+(task.url?" · 点击可打开任务管理页":""),
     priority:1
   });
