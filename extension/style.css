@@ -124,7 +124,7 @@ input:focus,select:focus{border-color:var(--ui-focus)}
 .day-label{display:flex;justify-content:center;align-items:center;gap:5px;border:1px solid var(--ui-border);padding:6px 9px;border-radius:7px;font-size:12px;cursor:pointer}
 .day-label:has(input:checked){background:var(--ui-surface-muted);border-color:var(--ui-text-muted)}
 .day-label input{width:14px;height:14px}
-.reminder-label{display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer}
+.reminder-label{display:flex;flex-direction:row;align-items:center;gap:10px;font-size:13px;cursor:pointer;min-height:36px}
 .field-error{font-size:12px;color:var(--ui-danger);grid-column:1/-1}
 .dialog-bottom{padding:15px 20px;border-top:1px solid var(--ui-border);display:flex;justify-content:flex-end;gap:8px}
 .import-input{display:none}
