@@ -15,11 +15,11 @@ const due=(t,d=new Date())=>{
   if(t.repeat==="weekly")return (t.weekdays||[]).includes(d.getDay());
   return !t.date || t.date<=day(d);
 };
-const done=t=>(t.completed||[]).includes(today);
+const done=t=>(t.completed||[]).includes(t.repeat==="once"?"__once__":today);
 const visible=()=>tasks.filter(t=>due(t)).sort((a,b)=>(done(a)-done(b))||((a.time||"99:99").localeCompare(b.time||"99:99"))||(a.createdAt||0)-(b.createdAt||0));
 async function load(){const v=await chrome.storage.local.get(KEY);tasks=Array.isArray(v[KEY])?v[KEY]:[];render()}
 async function save(){await chrome.storage.local.set({[KEY]:tasks});render()}
-async function toggle(id){tasks=tasks.map(t=>t.id!==id?t:{...t,completed:done(t)?(t.completed||[]).filter(x=>x!==today):[...(t.completed||[]),today]});await save()}
+async function toggle(id){tasks=tasks.map(t=>t.id!==id?t:{...t,completed:done(t)?(t.completed||[]).filter(x=>x!==(t.repeat==="once"?"__once__":today)):[...(t.completed||[]),t.repeat==="once"?"__once__":today]});await save()}
 const meta=t=>[t.category||"待办",t.repeat==="daily"?"每天":t.repeat==="weekly"?"每周 "+(t.weekdays||[]).map(x=>"日一二三四五六"[x]).join("、"):"单次",t.time||"",t.remind?"🔔":""].filter(Boolean).join(" · ");
 const line=t=>`<div class="item ${done(t)?"done":""}"><input class="check" type="checkbox" data-toggle="${esc(t.id)}" aria-label="完成 ${esc(t.title)}" ${done(t)?"checked":""}><div class="detail"><div class="name">${esc(t.title)}</div><div class="meta">${esc(meta(t))}</div></div><div class="actions">${t.url?`<button class="btn small" data-open="${esc(t.id)}">打开</button>`:""}${!popup?`<button class="btn small" data-edit="${esc(t.id)}">编辑</button><button class="btn small" data-delete="${esc(t.id)}">删除</button>`:""}</div></div>`;
 function render(){
