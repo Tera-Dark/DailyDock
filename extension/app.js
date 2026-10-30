@@ -287,7 +287,7 @@ async function submitEditor(event) {
     repeat, weekdays: repeat === "weekly" ? weekdays : [],
     date: repeat === "once" ? String(f.get("date") || "") : "",
     time, url, remind: f.has("remind"),
-    completed: original?.repeat === repeat ? (original?.completed || []) : [],
+    completed: original?.repeat === repeat && !(repeat === "once" && original?.date !== (String(f.get("date") || ""))) ? (original?.completed || []) : [],
     createdAt: original?.createdAt || Date.now()
   };
   const next = original ? tasks.map(t => t.id === original.id ? updated : t) : [...tasks, updated];
@@ -374,7 +374,7 @@ function bind() {
   }));
   $("[data-export]")?.addEventListener("click", exportData);
   $("[data-import]")?.addEventListener("click", () => $("#import-file")?.click());
-  $("#import-file")?.addEventListener("change", async e => { await importData(e.currentTarget.files?.[0]); e.currentTarget.value = ""; });
+  $("#import-file")?.addEventListener("change", async e => { const input = e.currentTarget; const file = input.files?.[0]; await importData(file); input.value = ""; });
 }
 function render() {
   $("#app").innerHTML = popup ? renderPopup() : renderOptions();
@@ -387,7 +387,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 const media = matchMedia("(prefers-color-scheme: dark)");
 media.addEventListener?.("change", applyTheme);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("#task-dialog")?.open) render(); });
 document.addEventListener("keydown", e => {
   if (e.key === "/" && !["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName) && !$("#task-dialog")?.open) {
     e.preventDefault(); (popup ? $("#quick-title") : $("#task-search"))?.focus();
