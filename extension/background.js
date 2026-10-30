@@ -20,7 +20,10 @@ async function refreshBadge(tasks) {
 }
 async function schedule() {
   const tasks = await readTasks();
+  const existing = await chrome.alarms.getAll();
+  const snoozes = existing.filter(a => a.name.startsWith("snooze:") && a.scheduledTime > Date.now());
   await chrome.alarms.clearAll();
+  for (const alarm of snoozes) await chrome.alarms.create(alarm.name, { when: alarm.scheduledTime });
   const nextDay = new Date();
   nextDay.setHours(24, 0, 5, 0);
   await chrome.alarms.create("midnight", { when: nextDay.getTime() });
