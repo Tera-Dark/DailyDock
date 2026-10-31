@@ -6,19 +6,22 @@ function isDue(task, today = new Date()) {
   if (task.repeat === "weekly") return Array.isArray(task.weekdays) && task.weekdays.includes(today.getDay());
   return !task.date || task.date <= dayKey(today);
 }
+function reminderDue(task, today = new Date()) {
+  return isDue(task, today) && !(task.repeat === "once" && task.date && task.date !== dayKey(today));
+}
 function isDone(task, today = new Date()) {
   return (task.completed || []).includes(task.repeat === "once" ? "__once__" : dayKey(today));
 }
 async function readTasks() {
   const data = await chrome.storage.local.get(KEY);
-  return Array.isArray(data[KEY]) ? data[KEY] : [];
+  return Array.isArray(data[KEY]) ? data[KEY].filter(task => !task.deletedAt && task.kind !== "shortcut") : [];
 }
 async function refreshBadge(tasks) {
   const incomplete = tasks.filter(task => isDue(task) && !isDone(task)).length;
   await chrome.action.setBadgeText({ text: incomplete ? (incomplete > 99 ? "99+" : String(incomplete)) : "" });
   await chrome.action.setBadgeBackgroundColor({ color: "#303030" });
 }
-async function schedule() {
+async function runSchedule() {
   const tasks = await readTasks();
   const existing = await chrome.alarms.getAll();
   const snoozes = existing.filter(a => a.name.startsWith("snooze:") && a.scheduledTime > Date.now());
@@ -30,7 +33,7 @@ async function schedule() {
   await refreshBadge(tasks);
   const now = new Date();
   for (const task of tasks) {
-    if (!task.remind || !task.time || !isDue(task) || isDone(task)) continue;
+    if (!task.remind || !task.time || !reminderDue(task) || isDone(task)) continue;
     const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(task.time);
     if (!match) continue;
     const target = new Date();
@@ -41,9 +44,15 @@ async function schedule() {
     }
   }
 }
+// Serialize rescheduling so rapid edits cannot interleave clearAll and alarm creation.
+let scheduleQueue = Promise.resolve();
+function schedule() {
+  scheduleQueue = scheduleQueue.catch(() => {}).then(runSchedule);
+  return scheduleQueue;
+}
 async function remind(id) {
   const task = (await readTasks()).find(t => t.id === id);
-  if (!task || !task.remind || !isDue(task) || isDone(task)) return;
+  if (!task || !task.remind || !reminderDue(task) || isDone(task)) return;
   await chrome.notifications.create("dd:" + id, {
     type: "basic",
     iconUrl: chrome.runtime.getURL("icon.png"),
